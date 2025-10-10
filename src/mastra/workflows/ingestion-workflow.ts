@@ -2,12 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
+import { PDFExtract } from 'pdf.js-extract';
 
-// @ts-ignore - pdf-parse has issues with TypeScript modules
-import * as pdfParseModule from 'pdf-parse';
-
-// Fix pdf-parse import
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+const pdfExtract = new PDFExtract();
 
 function chunkText(text: string, chunkSize: number, overlap: number): string[] {
   const chunks: string[] = [];
@@ -75,19 +72,29 @@ const processPDFsStep = createStep({
       console.log(`Processing ${filename}...`);
       
       try {
-        const dataBuffer = fs.readFileSync(filePath);
-        const pdfData = await pdfParse(dataBuffer);
+        // Extract PDF content
+        const data = await pdfExtract.extract(filePath, {});
         
-        const chunks = chunkText(pdfData.text, 1000, 200);
+        // Combine all text from all pages
+        const fullText = data.pages
+          .map(page => 
+            page.content
+              .map(item => item.str)
+              .join(' ')
+          )
+          .join('\n\n');
         
-        console.log(`  - Extracted ${pdfData.numpages} pages`);
+        const chunks = chunkText(fullText, 1000, 200);
+        
+        console.log(`  - Extracted ${data.pages.length} pages`);
+        console.log(`  - Text length: ${fullText.length} characters`);
         console.log(`  - Created ${chunks.length} chunks`);
         
         results.push({
           filename,
           year,
           chunks,
-          pages: pdfData.numpages,
+          pages: data.pages.length,
         });
         
         console.log(`  ✓ Processed successfully\n`);
