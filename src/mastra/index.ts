@@ -6,7 +6,7 @@ import * as path from 'path';
 import { berkshireAgent } from './agents/berkshire-agent';
 
 // Import workflows
-import { ingestionWorkflow } from './workflows/ingestion';
+import { ingestionWorkflow } from './workflows/ingestion-workflow';
 
 // Import tools
 import { berkshireSearchTool } from './tools/berkshire-tool';

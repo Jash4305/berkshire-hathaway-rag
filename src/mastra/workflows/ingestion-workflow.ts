@@ -1,12 +1,21 @@
-import { Step, Workflow } from '@mastra/core';
+import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 
 /**
  * Step 1: Load and Parse PDFs from data folder
  */
-const loadPDFsStep = new Step({
+const loadPDFsStep = createStep({
   id: 'load-pdfs',
   description: 'Load all Berkshire Hathaway PDFs from data folder',
+  inputSchema: z.object({}),
+  outputSchema: z.object({
+    documents: z.array(z.object({
+      fileName: z.string(),
+      year: z.string(),
+      content: z.string(),
+      source: z.string(),
+    })),
+  }),
   execute: async () => {
     const fs = await import('fs');
     const path = await import('path');
@@ -47,11 +56,34 @@ const loadPDFsStep = new Step({
 /**
  * Step 2: Chunk documents using Mastra's MDocument
  */
-const chunkDocumentsStep = new Step({
+const chunkDocumentsStep = createStep({
   id: 'chunk-documents',
   description: 'Chunk documents into smaller pieces for embedding',
-  execute: async ({ documents }: { documents: any[] }) => {
+  inputSchema: z.object({
+    documents: z.array(z.object({
+      fileName: z.string(),
+      year: z.string(),
+      content: z.string(),
+      source: z.string(),
+    })),
+  }),
+  outputSchema: z.object({
+    chunks: z.array(z.object({
+      text: z.string(),
+      metadata: z.object({
+        fileName: z.string(),
+        year: z.string(),
+        source: z.string(),
+        type: z.string(),
+        documentType: z.string(),
+        chunkIndex: z.number(),
+        totalChunks: z.number(),
+      }),
+    })),
+  }),
+  execute: async ({ inputData }) => {
     const { MDocument } = await import('@mastra/rag');
+    const { documents } = inputData;
 
     const allChunks: Array<{
       text: string;
@@ -104,13 +136,33 @@ const chunkDocumentsStep = new Step({
 /**
  * Step 3: Generate embeddings and store in vector database
  */
-const storeEmbeddingsStep = new Step({
+const storeEmbeddingsStep = createStep({
   id: 'store-embeddings',
   description: 'Generate embeddings and store in vector database',
-  execute: async ({ chunks }: { chunks: any[] }) => {
+  inputSchema: z.object({
+    chunks: z.array(z.object({
+      text: z.string(),
+      metadata: z.object({
+        fileName: z.string(),
+        year: z.string(),
+        source: z.string(),
+        type: z.string(),
+        documentType: z.string(),
+        chunkIndex: z.number(),
+        totalChunks: z.number(),
+      }),
+    })),
+  }),
+  outputSchema: z.object({
+    success: z.boolean(),
+    totalChunks: z.number(),
+    chunksByYear: z.record(z.number()),
+  }),
+  execute: async ({ inputData }) => {
     const { openai } = await import('@ai-sdk/openai');
     const { embedMany } = await import('ai');
     const { mastra } = await import('../index');
+    const { chunks } = inputData;
 
     console.log('Generating embeddings...');
     
@@ -170,11 +222,17 @@ const storeEmbeddingsStep = new Step({
 /**
  * Berkshire Hathaway Document Ingestion Workflow
  */
-export const ingestionWorkflow = new Workflow({
-  name: 'berkshire-ingestion',
-  triggerSchema: z.object({}),
+export const ingestionWorkflow = createWorkflow({
+  id: 'ingestion-workflow',
+  description: 'Process and ingest Berkshire Hathaway shareholder letters',
+  inputSchema: z.object({}),
+  outputSchema: z.object({
+    success: z.boolean(),
+    totalChunks: z.number(),
+    chunksByYear: z.record(z.number()),
+  }),
 })
-  .step(loadPDFsStep)
+  .then(loadPDFsStep)
   .then(chunkDocumentsStep)
   .then(storeEmbeddingsStep)
   .commit();

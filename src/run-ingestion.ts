@@ -9,17 +9,19 @@ async function runIngestion() {
     console.log('  Berkshire Hathaway Letters - Document Ingestion');
     console.log('═══════════════════════════════════════════════════════\n');
 
-    const workflow = mastra.getWorkflow('berkshire-ingestion');
+    const workflow = mastra.getWorkflow('ingestion-workflow');
 
     console.log('Starting ingestion workflow...\n');
 
-    const result = await workflow.execute({});
+    const run = await workflow.createRunAsync();
+    const result = await run.start({ inputData: {} });
 
     console.log('\n═══════════════════════════════════════════════════════');
     console.log('  Ingestion Complete!');
     console.log('═══════════════════════════════════════════════════════');
     console.log('Result:', JSON.stringify(result, null, 2));
 
+    process.exit(0);
   } catch (error) {
     console.error('❌ Ingestion failed:', error);
     process.exit(1);

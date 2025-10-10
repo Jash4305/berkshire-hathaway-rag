@@ -1,7 +1,7 @@
 import { createTool } from '@mastra/core';
 import { z } from 'zod';
 import { openai } from '@ai-sdk/openai';
-import { embed } from 'ai';
+import { embedMany } from 'ai';
 import { mastra } from '../index';
 
 /**
@@ -25,30 +25,34 @@ export const berkshireSearchTool = createTool({
       score: z.number(),
     })),
   }),
-  execute: async ({ context, runId, machineId }, { query, topK = 5 }) => {
+  execute: async ({ context, runId }, inputData) => {
+    const { query, topK = 5 } = inputData;
+    
     try {
       console.log(`Searching for: "${query}"`);
 
-      // Generate embedding for the query
-      const { embedding } = await embed({
+      // Generate embedding for the query using embedMany (compatible with v1)
+      const { embeddings } = await embedMany({
         model: openai.embedding('text-embedding-3-small'),
-        value: query,
+        values: [query],
       });
+
+      const queryEmbedding = embeddings[0];
 
       // Search in vector database
       const vectorStore = mastra.getVector('libSqlVector');
       const searchResults = await vectorStore.query({
         indexName: 'berkshire_letters',
-        queryVector: embedding,
+        queryVector: queryEmbedding,
         topK,
       });
 
-      // Format results
+      // Format results with explicit types
       const results = searchResults.map((result: any) => ({
-        text: result.metadata.text || result.text || '',
-        year: result.metadata.year || 'unknown',
-        fileName: result.metadata.fileName || 'unknown',
-        score: result.score || 0,
+        text: (result.metadata?.text || result.text || '') as string,
+        year: (result.metadata?.year || 'unknown') as string,
+        fileName: (result.metadata?.fileName || 'unknown') as string,
+        score: (result.score || 0) as number,
       }));
 
       console.log(`Found ${results.length} relevant chunks`);
