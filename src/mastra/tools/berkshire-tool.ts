@@ -25,30 +25,44 @@ export const berkshireSearchTool = createTool({
       score: z.number(),
     })),
   }),
-  execute: async ({ context, runId }, inputData) => {
-    const { query, topK = 5 } = inputData;
+  execute: async ({ context, runId }, toolOptions): Promise<{
+    results: Array<{
+      text: string;
+      year: string;
+      fileName: string;
+      score: number;
+    }>;
+  }> => {
+    // Extract parameters from toolOptions
+    const query = (toolOptions as any)?.query as string;
+    const topK = ((toolOptions as any)?.topK as number) || 5;
     
     try {
       console.log(`Searching for: "${query}"`);
 
-      // Generate embedding for the query using embedMany (compatible with v1)
+      // Generate embedding for the query using embedMany (compatible with AI SDK v4)
       const { embeddings } = await embedMany({
-        model: openai.embedding('text-embedding-3-small'),
+        model: openai.embedding('text-embedding-3-small') as any,
         values: [query],
       });
 
-      const queryEmbedding = embeddings[0];
+      const queryEmbedding: number[] = embeddings[0];
 
       // Search in vector database
-      const vectorStore = mastra.getVector('libSqlVector');
-      const searchResults = await vectorStore.query({
+      const vectorStore: any = mastra.getVector('libSqlVector');
+      const searchResults: any[] = await vectorStore.query({
         indexName: 'berkshire_letters',
         queryVector: queryEmbedding,
         topK,
       });
 
       // Format results with explicit types
-      const results = searchResults.map((result: any) => ({
+      const results: Array<{
+        text: string;
+        year: string;
+        fileName: string;
+        score: number;
+      }> = searchResults.map((result: any) => ({
         text: (result.metadata?.text || result.text || '') as string,
         year: (result.metadata?.year || 'unknown') as string,
         fileName: (result.metadata?.fileName || 'unknown') as string,

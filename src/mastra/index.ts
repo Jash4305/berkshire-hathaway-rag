@@ -8,9 +8,6 @@ import { berkshireAgent } from './agents/berkshire-agent';
 // Import workflows
 import { ingestionWorkflow } from './workflows/ingestion-workflow';
 
-// Import tools
-import { berkshireSearchTool } from './tools/berkshire-tool';
-
 /**
  * Initialize LibSQL Vector Database
  */
@@ -20,16 +17,19 @@ const libSqlVector = new LibSQLVector({
 
 /**
  * Initialize Mastra with all components
+ * 
+ * Naming Convention:
+ * - File names: kebab-case (ingestion-workflow.ts)
+ * - Export names: camelCase (ingestionWorkflow)
+ * - Workflow IDs: camelCase matching export (ingestionWorkflow)
+ * - Access via: mastra.getWorkflow('ingestionWorkflow')
  */
-export const mastra = new Mastra({
+export const mastra: Mastra<any> = new Mastra({
   agents: {
     berkshireAgent,
   },
   workflows: {
     ingestionWorkflow,
-  },
-  tools: {
-    berkshireSearchTool,
   },
   vectors: {
     libSqlVector,

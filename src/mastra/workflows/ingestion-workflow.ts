@@ -19,7 +19,11 @@ const loadPDFsStep = createStep({
   execute: async () => {
     const fs = await import('fs');
     const path = await import('path');
-    const pdfParse = await import('pdf-parse');
+    
+    // Use dynamic require for CommonJS module
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
+    const pdfParse = require('pdf-parse');
 
     const dataDir = path.resolve(process.cwd(), 'data');
     const pdfFiles = fs.readdirSync(dataDir)
@@ -37,7 +41,9 @@ const loadPDFsStep = createStep({
       console.log(`Processing ${file}...`);
       
       const dataBuffer = fs.readFileSync(filePath);
-      const pdfData = await pdfParse.default(dataBuffer);
+      
+      // Call pdf-parse directly
+      const pdfData = await pdfParse(dataBuffer);
       
       documents.push({
         fileName: file,
@@ -166,8 +172,9 @@ const storeEmbeddingsStep = createStep({
 
     console.log('Generating embeddings...');
     
+    // Use embedMany with type assertion to work around v1/v2 incompatibility
     const { embeddings } = await embedMany({
-      model: openai.embedding('text-embedding-3-small'),
+      model: openai.embedding('text-embedding-3-small') as any,
       values: chunks.map(chunk => chunk.text),
     });
 
@@ -223,7 +230,7 @@ const storeEmbeddingsStep = createStep({
  * Berkshire Hathaway Document Ingestion Workflow
  */
 export const ingestionWorkflow = createWorkflow({
-  id: 'ingestion-workflow',
+  id: 'ingestionWorkflow',
   description: 'Process and ingest Berkshire Hathaway shareholder letters',
   inputSchema: z.object({}),
   outputSchema: z.object({

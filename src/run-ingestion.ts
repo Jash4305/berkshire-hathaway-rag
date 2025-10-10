@@ -9,7 +9,11 @@ async function runIngestion() {
     console.log('  Berkshire Hathaway Letters - Document Ingestion');
     console.log('═══════════════════════════════════════════════════════\n');
 
-    const workflow = mastra.getWorkflow('ingestion-workflow');
+    // IMPORTANT: Use the workflow ID that matches the export name (camelCase)
+    // File: ingestion-workflow.ts (kebab-case)
+    // Export: ingestionWorkflow (camelCase)
+    // ID: 'ingestionWorkflow' (camelCase)
+    const workflow = mastra.getWorkflow('ingestionWorkflow');
 
     console.log('Starting ingestion workflow...\n');
 
