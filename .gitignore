@@ -8,3 +8,11 @@ dist
 *.db-* 
 data
 instructions
+src/tests/
+vector.db
+*.db-shm
+*.db-wal
+database/*.backup
+.DS_Store
+Thumbs.db
+temp

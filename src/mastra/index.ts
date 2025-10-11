@@ -1,27 +1,30 @@
 import { Mastra } from '@mastra/core';
-import { LibSQLVector } from '@mastra/libsql';
-import * as path from 'path';
+import { PgVector } from '@mastra/pg';
+
 // Import agent
 import { berkshireAgent } from './agents/berkshire-agent';
+
 // Import workflows
 import { ingestionWorkflow } from './workflows/ingestion-workflow';
+
 /**
- * Initialize LibSQL Vector Database
+ * Initialize PostgreSQL Vector Database with PgVector
  */
-const libSqlVector = new LibSQLVector({
-  connectionUrl: `file:${path.resolve(process.cwd(), 'vector.db')}`,
+const pgVector = new PgVector({
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:jash@localhost:5432/berkshire_rag',
 });
+
 /**
  * Initialize Mastra with all components
  */
-export const mastra: Mastra<any> = new Mastra({
+export const mastra = new Mastra({
   agents: {
     berkshireAgent,
   },
   workflows: {
-    ingestionWorkflow,  // Now it's a proper Workflow object
+    ingestionWorkflow,
   },
   vectors: {
-    libSqlVector,
+    pgVector,
   },
 });

@@ -6,16 +6,13 @@ import { createVectorQueryTool } from '@mastra/rag';
  * Create a tool for semantic search over Berkshire Hathaway letters
  */
 const vectorQueryTool = createVectorQueryTool({
-  vectorStoreName: 'libSqlVector',
+  vectorStoreName: 'pgVector',
   indexName: 'berkshire_letters',
   model: openai.embedding('text-embedding-3-small'),
 });
 
 /**
  * Berkshire Hathaway Research Agent
- * 
- * This agent specializes in Warren Buffett's investment philosophy
- * and Berkshire Hathaway's business strategies based on shareholder letters.
  */
 export const berkshireAgent = new Agent({
   name: 'Berkshire Assistant',
