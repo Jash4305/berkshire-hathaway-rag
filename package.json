@@ -1,15 +1,16 @@
 {
   "name": "berkshire-hathaway-rag",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI-powered RAG system for querying Warren Buffett's investment philosophy from Berkshire Hathaway shareholder letters",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "ingest": "tsx src/run-ingestion.ts",
     "dev": "mastra dev",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["rag", "ai", "mastra", "berkshire-hathaway", "warren-buffett", "gpt-4", "vector-database"],
   "author": "",
   "license": "ISC",
   "type": "module",

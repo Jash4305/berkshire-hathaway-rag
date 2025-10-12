@@ -1,18 +1,14 @@
 import { Agent } from '@mastra/core';
 import { openai } from '@ai-sdk/openai';
-import { createVectorQueryTool } from '@mastra/rag';
-
-/**
- * Create a tool for semantic search over Berkshire Hathaway letters
- */
-const vectorQueryTool = createVectorQueryTool({
-  vectorStoreName: 'pgVector',
-  indexName: 'berkshire_letters',
-  model: openai.embedding('text-embedding-3-small'),
-});
+import { Memory } from '@mastra/memory';
+import { LibSQLStore } from '@mastra/libsql';
+import { berkshireSearchTool } from '../tools/berkshire-tool';
 
 /**
  * Berkshire Hathaway Research Agent
+ * 
+ * Specialized AI agent for answering questions about Warren Buffett's
+ * investment philosophy based on Berkshire Hathaway shareholder letters.
  */
 export const berkshireAgent = new Agent({
   name: 'Berkshire Assistant',
@@ -39,8 +35,16 @@ Response Format:
 - For follow-up questions, reference previous conversation context appropriately
 
 Remember: Your authority comes from the shareholder letters. Stay grounded in this source material and be transparent about the scope and limitations of your knowledge.`,
+  
   model: openai('gpt-4o'),
+  
   tools: {
-    vectorQueryTool,
+    berkshireSearchTool,
   },
+  
+  memory: new Memory({
+    storage: new LibSQLStore({
+      url: 'file:./berkshire-memory.db', // Local SQLite database for conversation memory
+    }),
+  }),
 });

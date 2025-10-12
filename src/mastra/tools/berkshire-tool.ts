@@ -1,8 +1,9 @@
+import 'dotenv/config';
 import { createTool } from '@mastra/core';
 import { z } from 'zod';
 import { openai } from '@ai-sdk/openai';
-import { embedMany } from 'ai';
-import { mastra } from '../index';
+import { embed } from 'ai';
+import { Pool } from 'pg';
 
 /**
  * Berkshire Letters Search Tool
@@ -13,67 +14,83 @@ import { mastra } from '../index';
 export const berkshireSearchTool = createTool({
   id: 'search-berkshire-letters',
   description: 'Search through Berkshire Hathaway shareholder letters to find relevant information about Warren Buffett\'s investment philosophy, business strategies, and company performance.',
+  
   inputSchema: z.object({
     query: z.string().describe('The search query to find relevant information in Berkshire Hathaway letters'),
     topK: z.number().optional().default(5).describe('Number of top results to return'),
   }),
+  
   outputSchema: z.object({
     results: z.array(z.object({
       text: z.string(),
       year: z.string(),
-      fileName: z.string(),
-      score: z.number(),
+      source: z.string(),
+      similarity: z.number(),
     })),
+    totalFound: z.number(),
   }),
-  execute: async ({ context, runId }, toolOptions): Promise<{
-    results: Array<{
-      text: string;
-      year: string;
-      fileName: string;
-      score: number;
-    }>;
-  }> => {
-    // Extract parameters from toolOptions
-    const query = (toolOptions as any)?.query as string;
-    const topK = ((toolOptions as any)?.topK as number) || 5;
+  
+  execute: async ({ context }) => {
+    const query = context.query as string;
+    const topK = (context.topK as number) || 5;
+    
+    console.log(`🔍 Searching for: "${query}"`);
     
     try {
-      console.log(`Searching for: "${query}"`);
-
-      // Generate embedding for the query using embedMany (compatible with AI SDK v4)
-      const { embeddings } = await embedMany({
-        model: openai.embedding('text-embedding-3-small') as any,
-        values: [query],
+      // Generate embedding for the query using AI SDK v5
+      const embeddingModel = openai.embedding('text-embedding-3-small');
+      const { embedding } = await embed({
+        model: embeddingModel,
+        value: query,
       });
 
-      const queryEmbedding: number[] = embeddings[0];
+      // Connect to PostgreSQL
+      const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:jash@localhost:5432/berkshire_rag';
+      const pool = new Pool({ connectionString });
+      
+      const client = await pool.connect();
+      
+      try {
+        // Perform vector similarity search
+        const embeddingStr = `[${embedding.join(',')}]`;
+        
+        const result = await client.query(
+          `
+          SELECT 
+            chunk_id,
+            content,
+            metadata,
+            1 - (embedding <=> $1::vector) as similarity
+          FROM document_chunks
+          WHERE embedding IS NOT NULL
+          ORDER BY embedding <=> $1::vector
+          LIMIT $2
+          `,
+          [embeddingStr, topK]
+        );
 
-      // Search in vector database
-      const vectorStore: any = mastra.getVector('libSqlVector');
-      const searchResults: any[] = await vectorStore.query({
-        indexName: 'berkshire_letters',
-        queryVector: queryEmbedding,
-        topK,
-      });
+        // Format results
+        const results = result.rows.map(row => ({
+          text: row.content,
+          year: row.metadata.year,
+          source: row.metadata.source,
+          similarity: parseFloat(row.similarity),
+        }));
 
-      // Format results with explicit types
-      const results: Array<{
-        text: string;
-        year: string;
-        fileName: string;
-        score: number;
-      }> = searchResults.map((result: any) => ({
-        text: (result.metadata?.text || result.text || '') as string,
-        year: (result.metadata?.year || 'unknown') as string,
-        fileName: (result.metadata?.fileName || 'unknown') as string,
-        score: (result.score || 0) as number,
-      }));
-
-      console.log(`Found ${results.length} relevant chunks`);
-
-      return { results };
+        console.log(`✅ Found ${results.length} relevant chunks`);
+        
+        return {
+          results,
+          totalFound: results.length,
+        };
+        
+      } finally {
+        client.release();
+        await pool.end();
+      }
+      
     } catch (error) {
-      console.error('Error searching Berkshire letters:', error);
+      console.error('❌ Error searching Berkshire letters:', error);
       throw error;
     }
   },

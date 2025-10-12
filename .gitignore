@@ -16,3 +16,4 @@ database/*.backup
 .DS_Store
 Thumbs.db
 temp
+berkshire-memory.db
