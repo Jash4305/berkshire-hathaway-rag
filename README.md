@@ -75,7 +75,6 @@ npm run ingest
 npm run dev
 ```
 
-
 ## ⚙️ Configuration
 
 ### `.env` File
@@ -102,17 +101,20 @@ npm run start     # Run production server
 ## 💬 Usage
 
 ### 1. Start the Application
+
 ```bash
 npm run dev
 ```
 
-# 2. Setup database
+### 2. Setup database
+
 ```bash
 psql -U postgres -c "CREATE DATABASE berkshire_rag;"
 psql -U postgres -d berkshire_rag -f database/schema.sql
 ```
 
 ### 3. Open the Chat Interface
+
 Navigate to `http://localhost:4111` in your browser
 
 ### 3. Ask Questions
@@ -121,3 +123,4 @@ Navigate to `http://localhost:4111` in your browser
 
 ```
 You: What companies does Berkshire own the largest stakes in?
+```
