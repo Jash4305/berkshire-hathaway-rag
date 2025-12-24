@@ -44,11 +44,12 @@ A production-ready RAG (Retrieval-Augmented Generation) system that lets you hav
 
 ### Prerequisites
 
-| Tool           | Version | Purpose             |
-| -------------- | ------- | ------------------- |
-| Node.js        | ≥20.9.0 | Runtime             |
-| PostgreSQL     | ≥14.0   | Vector database     |
-| OpenAI API Key | -       | GPT-4o & embeddings |
+| Tool               | Version             | Purpose             |
+| ------------------ | ------------------- | ------------------- |
+| Node.js            | ≥20.9.0             | Runtime             |
+| PostgreSQL         | ≥14.0               | Vector database     |
+| pgVector Extension | same as PostgresSQL | Store Vectors       |
+| OpenAI API Key     | -                   | GPT-4o & embeddings |
 
 ### Installation
 
@@ -110,7 +111,7 @@ npm run dev
 
 ```bash
 psql -U postgres -c "CREATE DATABASE berkshire_rag;"
-psql -U postgres -d berkshire_rag -f database/schema.sql
+psql -U postgres -d berkshire_rag -f src/database/schema.sql
 ```
 
 ### 3. Open the Chat Interface

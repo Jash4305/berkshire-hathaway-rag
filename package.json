@@ -10,7 +10,15 @@
     "start": "mastra start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["rag", "ai", "mastra", "berkshire-hathaway", "warren-buffett", "gpt-4", "vector-database"],
+  "keywords": [
+    "rag",
+    "ai",
+    "mastra",
+    "berkshire-hathaway",
+    "warren-buffett",
+    "gpt-4",
+    "vector-database"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
@@ -36,6 +44,7 @@
     "@types/node": "^24.7.1",
     "@types/pdf-parse": "^1.1.5",
     "mastra": "^0.15.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
