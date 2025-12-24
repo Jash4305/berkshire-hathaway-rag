@@ -61,7 +61,7 @@ cd berkshire-hathaway-rag
 npm install
 
 # 3. Configure environment
-cp .env.example .env
+cp .env.sample .env
 # Edit .env with your credentials
 
 # 4. Setup database
